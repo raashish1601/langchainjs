@@ -77,6 +77,8 @@ export type {
   ToolParams,
   ToolReturnType,
   ToolRunnableConfig,
+  ToolRuntimeStore,
+  ToolRuntimeStoreItem,
   ToolInputSchemaBase as ToolSchemaBase,
 } from "./types.js";
 
@@ -86,6 +88,8 @@ export {
   isStructuredTool,
   isStructuredToolParams,
   type ToolRuntime,
+  type ToolRuntimeStore,
+  type ToolRuntimeStoreItem,
 } from "./types.js";
 
 export { ToolInputParsingException };

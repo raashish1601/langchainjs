@@ -33,6 +33,8 @@ export {
   tool,
   Tool,
   type ToolRuntime,
+  type ToolRuntimeStore,
+  type ToolRuntimeStoreItem,
   DynamicTool,
   StructuredTool,
   DynamicStructuredTool,

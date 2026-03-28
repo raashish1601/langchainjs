@@ -2,7 +2,7 @@ import { z } from "zod/v3";
 import { describe, it, expectTypeOf } from "vitest";
 
 import { tool, DynamicStructuredTool, DynamicTool } from "../index.js";
-import type { ToolRuntime } from "../types.js";
+import type { ToolRuntime, ToolRuntimeStore } from "../types.js";
 import type { RunnableConfig } from "../../runnables/config.js";
 
 describe("tool() literal name type inference", () => {
@@ -184,6 +184,13 @@ describe("ToolRuntime", () => {
         expectTypeOf(runtime.context).toEqualTypeOf<Context>();
         expectTypeOf(runtime.toolCallId).toEqualTypeOf<string>();
         expectTypeOf(runtime.config).toMatchTypeOf<RunnableConfig>();
+        expectTypeOf(runtime.store).toEqualTypeOf<ToolRuntimeStore | null>();
+        // eslint-disable-next-line no-void
+        void runtime.store?.get(["users"], "123");
+        // eslint-disable-next-line no-void
+        void runtime.store?.put(["users"], "123", { name: "Ada" });
+        // @ts-expect-error ToolRuntime store uses LangGraph's get/put API.
+        runtime.store?.mset([["users", "123"]]);
         return `Hello, ${runtime.state.userId}!`;
       },
       {
@@ -204,6 +211,7 @@ describe("ToolRuntime", () => {
         expectTypeOf(runtime.context).toEqualTypeOf<Context>();
         expectTypeOf(runtime.toolCallId).toEqualTypeOf<string>();
         expectTypeOf(runtime.config).toMatchTypeOf<RunnableConfig>();
+        expectTypeOf(runtime.store).toEqualTypeOf<ToolRuntimeStore | null>();
         return `Hello, ${runtime.state.userId}!`;
       },
       {

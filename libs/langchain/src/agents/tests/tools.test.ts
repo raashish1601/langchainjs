@@ -37,6 +37,14 @@ describe("tools", () => {
         expect(runtime.config.recursionLimit).toEqual(25);
         expect(typeof runtime.writer).toBe("function");
         expect(runtime.store?.constructor.name).toEqual("AsyncBatchedStore");
+        await runtime.store?.put(["weather"], input.city, {
+          forecast: "sunny",
+        });
+        const storedForecast = await runtime.store?.get<{ forecast: string }>(
+          ["weather"],
+          input.city
+        );
+        expect(storedForecast?.value).toEqual({ forecast: "sunny" });
         return `The weather in ${input.city} is sunny. The foo is ${runtime.context.foo} and the bar is ${runtime.state.bar}.`;
       },
       {

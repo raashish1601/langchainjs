@@ -25,7 +25,6 @@ import {
 } from "../utils/types/zod.js";
 
 import { JSONSchema } from "../utils/json_schema.js";
-import type { BaseStore } from "../stores.js";
 
 export type ResponseFormat = "content" | "content_and_artifact" | string;
 
@@ -33,6 +32,42 @@ export type ResponseFormat = "content" | "content_and_artifact" | string;
 export type ToolOutputType = any;
 
 export type ToolEventType = unknown;
+
+/**
+ * Minimal structural shape of the LangGraph store injected into `ToolRuntime`.
+ *
+ * This intentionally models the runtime `get`/`put` API without taking a
+ * package dependency on `@langchain/langgraph-checkpoint`.
+ */
+export interface ToolRuntimeStore {
+  get<TValue = unknown>(
+    namespace: string[],
+    key: string
+  ): Promise<ToolRuntimeStoreItem<TValue> | null>;
+  put(
+    namespace: string[],
+    key: string,
+    value: unknown,
+    index?: false | string[]
+  ): Promise<void>;
+  search<TValue = unknown>(
+    namespacePrefix: string[],
+    options?: Record<string, unknown>
+  ): Promise<Array<ToolRuntimeStoreItem<TValue>>>;
+  delete(namespace: string[], key: string): Promise<void>;
+  listNamespaces(options?: Record<string, unknown>): Promise<string[][]>;
+  start?(): void | Promise<void>;
+  stop?(): void | Promise<void>;
+}
+
+export interface ToolRuntimeStoreItem<TValue = unknown> {
+  namespace: string[];
+  key: string;
+  value: TValue;
+  createdAt?: string;
+  updatedAt?: string;
+  score?: number;
+}
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export type InferToolEventFromFunc<F> = F extends (
@@ -482,7 +517,7 @@ export function isLangChainTool(tool?: unknown): tool is StructuredToolParams {
  * - `toolCallId`: The ID of the current tool call
  * - `config`: `RunnableConfig` for the current execution
  * - `context`: Runtime context
- * - `store`: `BaseStore` instance for persistent storage
+ * - `store`: LangGraph store instance for persistent storage
  * - `writer`: Stream writer for streaming output
  *
  * No `Annotated` wrapper is needed - just use `runtime: ToolRuntime`
@@ -513,7 +548,7 @@ export function isLangChainTool(tool?: unknown): tool is StructuredToolParams {
  *     const userId = runtime.context?.userId;
  *
  *     // Access store
- *     await runtime.store?.mset([["key", "value"]]);
+ *     await runtime.store?.put(["users"], "current", { id: userId });
  *
  *     // Stream output
  *     runtime.writer?.("Processing...");
@@ -572,9 +607,9 @@ export type ToolRuntime<
       ? TContext
       : unknown;
   /**
-   * BaseStore instance for persistent storage (from langgraph `Runtime`).
+   * LangGraph store instance for persistent storage.
    */
-  store: BaseStore<string, unknown> | null;
+  store: ToolRuntimeStore | null;
   /**
    * Stream writer for streaming output (from langgraph `Runtime`).
    */
